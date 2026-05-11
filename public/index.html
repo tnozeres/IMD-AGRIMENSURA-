@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMD Agrimensura</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#ebebeb;
+  --text:#111111;--text2:#555555;--text3:#999999;
+  --border:#e0e0e0;--border2:#cccccc;
+  --radius:8px;--radius-sm:5px;
+  --blue:#0C447C;--green:#085041;--orange:#633806;--red:#A32D2D;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1a1a1a;--bg2:#252525;--bg3:#333333;--text:#f0f0f0;--text2:#aaaaaa;--text3:#666666;--border:#333333;--border2:#444444;}
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);max-width:680px;margin:0 auto}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.brand{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
+.tabs{display:flex;gap:2px;flex-wrap:wrap}
+.tab{padding:5px 8px;font-size:12px;border-radius:var(--radius-sm);border:none;background:none;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:3px}
+.tab.on{background:var(--bg2);color:var(--text);font-weight:500}
+.scr{display:none;padding:12px 16px}
+.scr.on{display:block}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--text3);font-size:14px}
+.loading i{font-size:28px;display:block;margin-bottom:8px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Metrics */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:9px;margin-bottom:14px}
+.met{background:var(--bg2);border-radius:var(--radius);padding:10px 12px}
+.met-l{font-size:12px;color:var(--text2);margin-bottom:2px}
+.met-v{font-size:18px;font-weight:500}
+.met-s{font-size:11px;color:var(--text3);margin-top:1px}
+.sec{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px}
+
+/* Cards */
+.card-list{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:4px}
+.card{background:var(--bg);border-bottom:1px solid var(--border);padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.card:last-child{border-bottom:none}
+.card:hover{background:var(--bg2)}
+.av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.av-i{background:#E6F1FB;color:#0C447C}
+.av-t{background:#E1F5EE;color:#085041}
+.inf{flex:1;min-width:0}
+.cli{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nom{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rgt{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.monto{font-size:12px;font-weight:500}
+.badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:99px;font-size:10px;font-weight:500}
+.bg{background:#E1F5EE;color:#085041}
+.ba{background:#FAEEDA;color:#633806}
+.pay-btns{display:flex;gap:3px}
+.btn-ef{padding:2px 7px;font-size:10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:none;cursor:pointer;color:var(--text);line-height:1.4}
+.btn-tr{padding:2px 7px;font-size:10px;border-radius:var(--radius-sm);border:none;background:var(--text);color:var(--bg);cursor:pointer;line-height:1.4}
+.btn-del{padding:3px 5px;font-size:11px;border-radius:var(--radius-sm);border:none;background:none;cursor:pointer;color:var(--text3);flex-shrink:0}
+.btn-del:hover{color:var(--red)}
+
+/* Pager */
+.pager{display:flex;align-items:center;justify-content:space-between;padding:8px 2px}
+.pager-info{font-size:11px;color:var(--text3)}
+.pager-btns{display:flex;gap:4px}
+.pager-btn{padding:3px 9px;font-size:12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:none;cursor:pointer;color:var(--text)}
+.pager-btn.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.pager-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* Filters */
+.filters{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.filters select,.filters input{flex:1;font-size:12px;min-width:100px;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text)}
+
+/* Form */
+.fml{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:12px;color:var(--text2)}
+.fg input,.fg select,.fg textarea{width:100%;padding:6px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:13px}
+.fg textarea{resize:vertical;min-height:55px;font-family:inherit}
+.gas-hint{font-size:11px;margin-top:2px}
+.gas-tag{font-size:11px;font-weight:500;padding:2px 7px;border-radius:99px;display:inline-block}
+.gas-ivan{background:#E6F1FB;color:#0C447C}
+.gas-tomi{background:#E1F5EE;color:#085041}
+
+/* Buttons */
+.btn-primary{background:var(--text);color:var(--bg);border:none;padding:9px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;width:100%;margin-top:8px}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:none;cursor:pointer;color:var(--text)}
+.btn-sm:hover{background:var(--bg2)}
+.btn-import{background:#185FA5;color:#fff;border:none;padding:9px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;width:100%}
+.btn-import:disabled{opacity:.4;cursor:not-allowed}
+
+/* Total bar */
+.total-bar{background:var(--bg2);border-radius:var(--radius);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+
+/* Empty */
+.empty{text-align:center;padding:24px;color:var(--text3);font-size:13px}
+
+/* Toast */
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:var(--radius);font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:99}
+.toast.show{opacity:1}
+
+/* Modal */
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:50;align-items:flex-start;justify-content:center;padding:16px;padding-top:40px}
+.modal-bg.show{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);padding:16px;width:100%;max-width:540px;max-height:85vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.modal-title{font-size:14px;font-weight:600}
+.btn-close{background:none;border:none;cursor:pointer;color:var(--text2);font-size:18px;line-height:1}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.detail-item{background:var(--bg2);border-radius:var(--radius-sm);padding:8px 10px}
+.detail-item.full{grid-column:1/-1}
+.detail-label{font-size:11px;color:var(--text2);margin-bottom:1px}
+.detail-val{font-size:13px;font-weight:500}
+.btn-row{display:flex;gap:7px;margin-top:4px}
+.btn-edit{flex:1;padding:7px;font-size:13px;border-radius:var(--radius);border:1px solid var(--border2);background:none;cursor:pointer;font-weight:500}
+.btn-pay{flex:1;padding:7px;font-size:13px;border-radius:var(--radius);border:none;background:var(--text);color:var(--bg);cursor:pointer;font-weight:500}
+.edit-mode .detail-grid{display:none}
+.edit-mode .edit-form{display:block}
+.edit-form{display:none}
+
+/* Month tabs */
+.month-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.mtab{padding:3px 9px;font-size:12px;border-radius:99px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--text2)}
+.mtab.on{background:var(--bg2);color:var(--text);font-weight:500;border-color:var(--border2)}
+
+/* Config */
+.cfg-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px}
+.cfg-name{flex:1;font-size:13px;font-weight:500}
+.cfg-input{width:110px;font-size:13px;text-align:right;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text)}
+.cfg-label{font-size:11px;color:var(--text2);margin-left:4px}
+
+/* Society */
+.soc-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:7px}
+.soc-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:10px}
+.soc-calc{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.soc-line{display:flex;justify-content:space-between;font-size:13px}
+.soc-line-label{color:var(--text2)}
+.soc-line-val{font-weight:500}
+.soc-divider{border:none;border-top:1px solid var(--border);margin:3px 0}
+.soc-total{display:flex;justify-content:space-between;font-size:14px;font-weight:500;padding-top:3px}
+.split-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+.split-card{text-align:center;padding:10px 8px;border-radius:var(--radius)}
+.split-ivan{background:#E6F1FB}
+.split-tomi{background:#E1F5EE}
+.split-pct{font-size:22px;font-weight:500}
+.split-pct-ivan{color:#0C447C}
+.split-pct-tomi{color:#085041}
+.split-amount{font-size:13px;font-weight:500;margin-top:3px}
+.split-ivan .split-amount{color:#0C447C}
+.split-tomi .split-amount{color:#085041}
+.split-label{font-size:11px;color:var(--text2);margin-top:2px}
+.ajuste-box{background:var(--bg2);border-radius:var(--radius-sm);padding:10px 12px}
+.ajuste-title{font-size:11px;color:var(--text2);margin-bottom:7px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.ajuste-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.ajuste-label{color:var(--text2)}
+.ajuste-val{font-weight:500}
+.ajuste-final{margin-top:7px;padding-top:7px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.ajuste-pos{color:#085041}
+.ajuste-neg{color:#A32D2D}
+.prof-cards{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:7px}
+.prof-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px}
+.prof-name{font-size:13px;font-weight:500;margin-bottom:8px}
+.prof-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.prof-label{color:var(--text2)}
+.prof-val{font-weight:500}
+.divider{border:none;border-top:1px solid var(--border);margin:6px 0}
+
+/* Import */
+.import-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:10px}
+.import-zone:hover,.import-zone.dragging{border-color:#185FA5;background:#E6F1FB}
+.import-title{font-size:14px;font-weight:500;margin-bottom:3px}
+.import-sub{font-size:12px;color:var(--text2)}
+.import-preview{background:var(--bg2);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;display:none}
+.preview-title{font-size:12px;font-weight:500;margin-bottom:7px}
+.preview-table{width:100%;border-collapse:collapse;font-size:11px}
+.preview-table th{background:var(--bg);padding:3px 7px;text-align:left;font-weight:500;border-bottom:1px solid var(--border)}
+.preview-table td{padding:3px 7px;border-bottom:1px solid var(--border);color:var(--text2)}
+.import-stats{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.import-stat{background:var(--bg);border-radius:var(--radius-sm);padding:7px 11px;font-size:12px}
+.import-stat strong{display:block;font-size:15px;font-weight:500}
+.info-box{font-size:12px;color:var(--text2);background:var(--bg2);padding:7px 11px;border-radius:var(--radius-sm);margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="brand"><i class="ti ti-map-pin" style="font-size:16px"></i>IMD Agrimensura</div>
+  <div class="tabs">
+    <button class="tab on" onclick="goTab('res',this)"><i class="ti ti-chart-bar"></i>Resumen</button>
+    <button class="tab" onclick="goTab('trab',this)"><i class="ti ti-list"></i>Trabajos</button>
+    <button class="tab" onclick="goTab('cob',this)"><i class="ti ti-cash"></i>Cobros</button>
+    <button class="tab" onclick="goTab('imp',this)"><i class="ti ti-upload"></i>Importar</button>
+    <button class="tab" onclick="goTab('new',this)"><i class="ti ti-plus"></i>Nuevo</button>
+    <button class="tab" onclick="goTab('cfg',this)"><i class="ti ti-settings"></i>Config</button>
+  </div>
+</div>
+
+<div id="scr-res" class="scr on"><div class="loading"><i class="ti ti-loader"></i>Cargando...</div></div>
+<div id="scr-trab" class="scr"><div class="loading"><i class="ti ti-loader"></i>Cargando...</div></div>
+<div id="scr-cob" class="scr"><div class="loading"><i class="ti ti-loader"></i>Cargando...</div></div>
+
+<div id="scr-imp" class="scr">
+  <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Importá el CSV exportado desde la planilla del empleado.</p>
+  <div class="info-box"><i class="ti ti-info-circle" style="font-size:13px;vertical-align:-1px;margin-right:4px"></i>Detecta automáticamente <strong>coma (,)</strong> o <strong>punto y coma (;)</strong>.</div>
+  <div style="margin-bottom:10px">
+    <label style="font-size:12px;color:var(--text2)">Mes</label><br>
+    <select id="imp-mes" style="margin-top:3px;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);font-size:13px;max-width:180px">
+      <option>Enero</option><option>Febrero</option><option>Marzo</option><option>Abril</option><option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option><option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+    </select>
+  </div>
+  <div class="import-zone" id="import-zone" onclick="document.getElementById('csv-input').click()" ondragover="event.preventDefault();this.classList.add('dragging')" ondragleave="this.classList.remove('dragging')" ondrop="handleDrop(event)">
+    <div style="font-size:26px;margin-bottom:6px"><i class="ti ti-file-text"></i></div>
+    <div class="import-title">Arrastrá el CSV acá o hacé clic para seleccionar</div>
+    <div class="import-sub">Excel en español (;) o inglés (,)</div>
+  </div>
+  <input type="file" id="csv-input" accept=".csv,.txt" style="display:none" onchange="handleFile(this.files[0])">
+  <div class="import-preview" id="import-preview">
+    <div class="preview-title" id="preview-title"></div>
+    <div class="import-stats" id="import-stats"></div>
+    <div style="overflow-x:auto"><table class="preview-table" id="preview-table"></table></div>
+  </div>
+  <button class="btn-import" id="btn-import" disabled onclick="doImport()"><i class="ti ti-database-import" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Importar trabajos</button>
+</div>
+
+<div id="scr-new" class="scr">
+  <div class="fml">
+    <div class="fg full"><label>Cliente</label><input type="text" id="f-cli" placeholder="Nombre del cliente"></div>
+    <div class="fg full"><label>Nomenclatura catastral</label><input type="text" id="f-nom" placeholder="09200..."></div>
+    <div class="fg full"><label>Contacto</label><input type="text" id="f-con" placeholder="Teléfono"></div>
+    <div class="fg"><label>Tipo de tarea</label><select id="f-tar" onchange="autoGasto()"><option>VEP</option><option>VEP con CC</option><option>CDyA NQN</option><option>VEP RUI</option><option>VEP URGENTE</option><option>VEP CON CC URGENTE</option></select></div>
+    <div class="fg"><label>Contrata</label><select id="f-con2" onchange="autoGasto()"><option>IVAN</option><option>TOMI</option></select></div>
+    <div class="fg"><label>Honorario ($)</label><input type="number" id="f-pre"></div>
+    <div class="fg"><label>Gastos ($)</label><input type="number" id="f-gas"><span class="gas-hint" id="f-gas-hint"></span></div>
+    <div class="fg"><label>Estado</label><select id="f-est"><option>Contratado</option><option>Iniciado/en tramite</option><option>Medido</option><option>Dibujado</option><option>Terminado</option></select></div>
+    <div class="fg"><label>Forma de pago</label><select id="f-fpag"><option value="">— Sin especificar —</option><option>Efectivo</option><option>Transferencia</option></select></div>
+    <div class="fg"><label>Cobro</label><select id="f-cob"><option>Cobrar</option><option>Pagado</option></select></div>
+    <div class="fg"><label>Cobrador</label><select id="f-cobr"><option value=""></option><option>IVAN</option><option>TOMI</option></select></div>
+    <div class="fg"><label>Mes</label><select id="f-mes"><option>Enero</option><option>Febrero</option><option>Marzo</option><option>Abril</option><option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option><option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option></select></div>
+    <div class="fg full"><label>Observación</label><textarea id="f-obs" placeholder="Notas..."></textarea></div>
+  </div>
+  <button class="btn-primary" id="btn-guardar" onclick="saveWork()"><i class="ti ti-device-floppy" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Guardar trabajo</button>
+</div>
+
+<div id="scr-cfg" class="scr">
+  <p class="sec" style="margin-top:0">sociedad</p>
+  <div class="cfg-row"><span class="cfg-name">Porcentaje IVAN</span><input class="cfg-input" type="number" id="cfg-pct-ivan" min="0" max="100" value="60"><span class="cfg-label">%</span></div>
+  <div class="cfg-row"><span class="cfg-name">Porcentaje TOMI</span><input class="cfg-input" type="number" id="cfg-pct-tomi" readonly style="opacity:.6"><span class="cfg-label">% (complementario)</span></div>
+  <p class="sec">honorarios por tarea ($)</p>
+  <div id="cfg-hon-list"></div>
+  <p class="sec">gastos fijos por tarea ($)</p>
+  <div id="cfg-gas-list"></div>
+  <button class="btn-primary" id="btn-cfg-save" onclick="saveCfg()"><i class="ti ti-check" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Guardar cambios</button>
+</div>
+
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" id="modal-inner">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-title"></span>
+      <button class="btn-close" onclick="closeModalDirect()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="detail-grid" id="detail-grid"></div>
+    <div class="edit-form" id="edit-form"></div>
+    <div class="btn-row" id="modal-btns"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/sheets';
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const TAREAS = ['VEP','VEP con CC','CDyA NQN','VEP RUI','VEP URGENTE','VEP CON CC URGENTE'];
+const SKIP_WORDS = ['CLIENTE','INSTRUCCIONES','CONTACTO','OBSERVACION','OBSERVACIÓN'];
+const PER_PAGE = 10;
+
+const DEFAULT_CFG = {
+  honorarios: {'VEP':420000,'VEP con CC':445000,'CDyA NQN':420000,'VEP RUI':500000,'VEP URGENTE':650000,'VEP CON CC URGENTE':750000},
+  gastos: {'VEP':61259,'VEP con CC':84919,'CDyA NQN':43791,'VEP RUI':120857,'VEP URGENTE':269799,'VEP CON CC URGENTE':426599},
+  pctIvan: 60
+};
+
+let DATA = [];
+let CFG = JSON.parse(JSON.stringify(DEFAULT_CFG));
+let curTab = 'res', filtEst = '', filtCon = '', filtSearch = '', filtMes = '', curMesRes = 'Enero';
+let pageTrab = 1, pageCob = 1;
+let pendingRows = [];
+
+// ===== API =====
+async function api(method, action, body) {
+  const url = `${API}?action=${action}`;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+async function loadData() {
+  try {
+    const [works, cfgRaw] = await Promise.all([
+      api('GET', 'trabajos'),
+      api('GET', 'config')
+    ]);
+    DATA = works || [];
+    // Parse config from flat key/value
+    if (cfgRaw && Object.keys(cfgRaw).length) {
+      CFG.pctIvan = parseFloat(cfgRaw['pctIvan']) || 60;
+      TAREAS.forEach(t => {
+        if (cfgRaw['hon_' + t]) CFG.honorarios[t] = parseFloat(cfgRaw['hon_' + t]);
+        if (cfgRaw['gas_' + t]) CFG.gastos[t] = parseFloat(cfgRaw['gas_' + t]);
+      });
+    }
+  } catch(e) {
+    toast('Error conectando con Google Sheets');
+  }
+}
+
+// ===== HELPERS =====
+function fmt(n) { return n ? '$' + Math.round(n).toLocaleString('es-AR') : '-'; }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function getGasto(tar) { return (CFG.gastos || {})[tar] || 0; }
+function getHonorario(tar) { return (CFG.honorarios || {})[tar] || 0; }
+function getPct() {
+  const pi = (CFG.pctIvan || 60) / 100;
+  return { ivan: pi, tomi: 1 - pi, ivanPct: Math.round(pi * 100), tomiPct: Math.round((1 - pi) * 100) };
+}
+function getMeses() {
+  const s = new Set(DATA.map(x => x.mes || 'Enero'));
+  return MESES.filter(m => s.has(m));
+}
+
+function autoGasto() {
+  const tar = document.getElementById('f-tar').value;
+  const con2 = document.getElementById('f-con2').value;
+  document.getElementById('f-pre').value = getHonorario(tar) || '';
+  document.getElementById('f-gas').value = getGasto(tar) || '';
+  document.getElementById('f-gas-hint').innerHTML = `<span class="gas-tag gas-${con2.toLowerCase()}">${fmt(getGasto(tar))} → ${con2} · Hon: ${fmt(getHonorario(tar))}</span>`;
+}
+
+// ===== NAVIGATION =====
+function goTab(name, btn) {
+  curTab = name;
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('scr-' + name).classList.add('on');
+  btn.classList.add('on');
+  render();
+}
+
+function render() { renderRes(); renderTrab(); renderCob(); renderCfg(); }
+
+// ===== PAGER =====
+function pager(list, page, setPageFn, renderFn) {
+  const total = list.length;
+  const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const p = Math.min(page, pages);
+  const slice = list.slice((p - 1) * PER_PAGE, p * PER_PAGE);
+  let btns = '';
+  const lo = Math.max(1, p - 2), hi = Math.min(pages, p + 2);
+  if (lo > 1) btns += `<button class="pager-btn" onclick="${setPageFn}(1);${renderFn}()">1</button>${lo > 2 ? '<span style="padding:0 3px;font-size:11px;color:var(--text3)">…</span>' : ''}`;
+  for (let i = lo; i <= hi; i++) btns += `<button class="pager-btn${i === p ? ' on' : ''}" onclick="${setPageFn}(${i});${renderFn}()">${i}</button>`;
+  if (hi < pages) btns += `${hi < pages - 1 ? '<span style="padding:0 3px;font-size:11px;color:var(--text3)">…</span>' : ''}<button class="pager-btn" onclick="${setPageFn}(${pages});${renderFn}()">${pages}</button>`;
+  const info = total === 0 ? 'Sin resultados' : `${(p - 1) * PER_PAGE + 1}–${Math.min(p * PER_PAGE, total)} de ${total}`;
+  return { slice, pagerHtml: `<div class="pager"><span class="pager-info">${info}</span><div class="pager-btns">${btns}</div></div>` };
+}
+
+// ===== CARD HTML =====
+function cardHtml(w) {
+  const cobrarBtns = `<div class="pay-btns"><button class="btn-ef" onclick="event.stopPropagation();quickPay(${w.id},'Efectivo')" title="Efectivo">Ef</button><button class="btn-tr" onclick="event.stopPropagation();quickPay(${w.id},'Transferencia')" title="Transferencia">Tr</button></div>`;
+  return `<div class="card" onclick="openDetail(${w.id})">
+    <div class="av av-${w.con2 === 'TOMI' ? 't' : 'i'}">${w.con2 === 'TOMI' ? 'TO' : 'IV'}</div>
+    <div class="inf">
+      <div class="cli">${w.cli}</div>
+      <div class="nom">${w.nom || '-'} · ${w.tar}${w.mes ? ' · ' + w.mes : ''}${w.obs ? ' · ' + w.obs : ''}</div>
+    </div>
+    <div class="rgt">
+      <div class="monto">${fmt(w.pre)}</div>
+      ${w.cob === 'Cobrar' ? cobrarBtns : '<span class="badge bg">Pagado</span>'}
+    </div>
+    <button class="btn-del" onclick="event.stopPropagation();delWork(${w.id})"><i class="ti ti-trash"></i></button>
+  </div>`;
+}
+
+// ===== RESUMEN =====
+function renderRes() {
+  const meses = getMeses();
+  if (!meses.includes(curMesRes)) curMesRes = meses[0] || 'Enero';
+  const md = DATA.filter(x => (x.mes || 'Enero') === curMesRes);
+  const pag = md.filter(x => x.cob === 'Pagado');
+  const cobrar = md.filter(x => x.cob === 'Cobrar');
+  const pct = getPct();
+  const ing = pag.reduce((a, x) => a + (x.pre || 0), 0);
+  const gas = md.reduce((a, x) => a + (x.gas || 0), 0);
+  const gan = ing - gas;
+  const pend = cobrar.reduce((a, x) => a + (x.pre || 0), 0);
+  const iC = pag.filter(x => x.cobr === 'IVAN').reduce((a, x) => a + (x.pre || 0), 0);
+  const tC = pag.filter(x => x.cobr === 'TOMI').reduce((a, x) => a + (x.pre || 0), 0);
+  const iG = md.filter(x => x.con2 === 'IVAN').reduce((a, x) => a + (x.gas || 0), 0);
+  const tG = md.filter(x => x.con2 === 'TOMI').reduce((a, x) => a + (x.gas || 0), 0);
+  const iCorr = Math.round(gan * pct.ivan), tCorr = Math.round(gan * pct.tomi);
+  const iNet = iC - iG, tNet = tC - tG;
+  const iAj = iCorr - iNet;
+  let ajMsg = '', ajCls = '';
+  if (Math.abs(iAj) < 1) { ajMsg = '✓ Sin ajustes pendientes'; ajCls = 'ajuste-pos'; }
+  else if (iAj > 0) { ajMsg = `TOMI le debe a IVAN ${fmt(Math.abs(iAj))}`; ajCls = 'ajuste-neg'; }
+  else { ajMsg = `IVAN le debe a TOMI ${fmt(Math.abs(iAj))}`; ajCls = 'ajuste-neg'; }
+  const byEst = {}; md.forEach(x => { byEst[x.est] = (byEst[x.est] || 0) + 1; });
+
+  document.getElementById('scr-res').innerHTML = `
+    <div class="month-tabs">${meses.map(m => `<button class="mtab${m === curMesRes ? ' on' : ''}" onclick="curMesRes='${m}';renderRes()">${m}</button>`).join('')}</div>
+    <div class="metrics">
+      <div class="met"><div class="met-l">Ingresos cobrados</div><div class="met-v" style="color:#085041">${fmt(ing)}</div><div class="met-s">${pag.length} trabajos</div></div>
+      <div class="met"><div class="met-l">A cobrar</div><div class="met-v" style="color:#633806">${fmt(pend)}</div><div class="met-s">${cobrar.length} trabajos</div></div>
+      <div class="met"><div class="met-l">Gastos totales</div><div class="met-v">${fmt(gas)}</div><div class="met-s">${md.length} trabajos</div></div>
+      <div class="met"><div class="met-l">Ganancia neta</div><div class="met-v">${fmt(gan)}</div><div class="met-s">sociedad</div></div>
+    </div>
+    <div class="sec">por profesional</div>
+    <div class="prof-cards">
+      <div class="prof-card" style="border-top:2px solid #378ADD">
+        <div class="prof-name" style="color:#0C447C"><i class="ti ti-user" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i>IVAN</div>
+        <div class="prof-row"><span class="prof-label">Cobró</span><span class="prof-val">${fmt(iC)}</span></div>
+        <div class="prof-row"><span class="prof-label">Gastos propios</span><span class="prof-val" style="color:#633806">− ${fmt(iG)}</span></div>
+        <hr class="divider">
+        <div class="prof-row"><span class="prof-label">Neto en mano</span><span class="prof-val">${fmt(iNet)}</span></div>
+      </div>
+      <div class="prof-card" style="border-top:2px solid #1D9E75">
+        <div class="prof-name" style="color:#085041"><i class="ti ti-user" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i>TOMI</div>
+        <div class="prof-row"><span class="prof-label">Cobró</span><span class="prof-val">${fmt(tC)}</span></div>
+        <div class="prof-row"><span class="prof-label">Gastos propios</span><span class="prof-val" style="color:#633806">− ${fmt(tG)}</span></div>
+        <hr class="divider">
+        <div class="prof-row"><span class="prof-label">Neto en mano</span><span class="prof-val">${fmt(tNet)}</span></div>
+      </div>
+    </div>
+    <div class="sec">distribución societaria</div>
+    <div class="soc-box">
+      <div class="soc-title">Sobre ganancia neta de la sociedad</div>
+      <div class="soc-calc">
+        <div class="soc-line"><span class="soc-line-label">Ingresos cobrados</span><span class="soc-line-val">${fmt(ing)}</span></div>
+        <div class="soc-line"><span class="soc-line-label">Gastos totales</span><span class="soc-line-val" style="color:#633806">− ${fmt(gas)}</span></div>
+        <hr class="soc-divider">
+        <div class="soc-total"><span>Ganancia neta</span><span>${fmt(gan)}</span></div>
+      </div>
+      <div class="split-grid">
+        <div class="split-card split-ivan"><div class="split-pct split-pct-ivan">${pct.ivanPct}%</div><div class="split-amount">${fmt(iCorr)}</div><div class="split-label">le corresponde a IVAN</div></div>
+        <div class="split-card split-tomi"><div class="split-pct split-pct-tomi">${pct.tomiPct}%</div><div class="split-amount">${fmt(tCorr)}</div><div class="split-label">le corresponde a TOMI</div></div>
+      </div>
+      <div class="ajuste-box">
+        <div class="ajuste-title">ajuste de cierre</div>
+        <div class="ajuste-row"><span class="ajuste-label">IVAN — neto en mano</span><span class="ajuste-val">${fmt(iNet)}</span></div>
+        <div class="ajuste-row"><span class="ajuste-label">IVAN — le corresponde</span><span class="ajuste-val">${fmt(iCorr)}</span></div>
+        <div class="ajuste-row"><span class="ajuste-label">TOMI — neto en mano</span><span class="ajuste-val">${fmt(tNet)}</span></div>
+        <div class="ajuste-row"><span class="ajuste-label">TOMI — le corresponde</span><span class="ajuste-val">${fmt(tCorr)}</span></div>
+        <div class="ajuste-final"><span style="font-size:13px;font-weight:500">Resultado</span><span class="${ajCls}" style="font-size:13px;font-weight:500">${ajMsg}</span></div>
+      </div>
+    </div>
+    <div class="sec">por estado</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      ${['Terminado','Iniciado/en tramite','Contratado','Medido'].map(e => `
+        <div style="background:var(--bg2);border-radius:var(--radius-sm);padding:8px 11px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px">${e}</span><span style="font-size:13px;font-weight:500">${byEst[e] || 0}</span>
+        </div>`).join('')}
+    </div>
+    <button class="btn-sm" onclick="exportCSV('${curMesRes}')" style="width:100%;padding:7px;font-size:12px"><i class="ti ti-download" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i>Descargar ${curMesRes} como CSV</button>`;
+}
+
+// ===== TRABAJOS =====
+function setPageTrab(p) { pageTrab = p; }
+function renderTrab() {
+  let list = DATA;
+  if (filtMes) list = list.filter(x => (x.mes || 'Enero') === filtMes);
+  if (filtEst) list = list.filter(x => x.est === filtEst);
+  if (filtCon) list = list.filter(x => x.con2 === filtCon);
+  if (filtSearch) list = list.filter(x => x.cli.toLowerCase().includes(filtSearch.toLowerCase()) || x.nom.includes(filtSearch));
+  const meses = getMeses();
+  const { slice, pagerHtml } = pager(list, pageTrab, 'setPageTrab', 'renderTrab');
+  document.getElementById('scr-trab').innerHTML = `
+    <div class="filters">
+      <input type="text" placeholder="Buscar..." value="${filtSearch}" oninput="filtSearch=this.value;pageTrab=1;renderTrab()">
+      <select onchange="filtMes=this.value;pageTrab=1;renderTrab()"><option value="">Todos los meses</option>${meses.map(m => `<option${filtMes === m ? ' selected' : ''}>${m}</option>`).join('')}</select>
+      <select onchange="filtEst=this.value;pageTrab=1;renderTrab()"><option value="">Todos los estados</option>${['Terminado','Iniciado/en tramite','Contratado','Medido','Dibujado'].map(e => `<option${filtEst === e ? ' selected' : ''}>${e}</option>`).join('')}</select>
+      <select onchange="filtCon=this.value;pageTrab=1;renderTrab()"><option value="">IVAN y TOMI</option><option${filtCon === 'IVAN' ? ' selected' : ''}>IVAN</option><option${filtCon === 'TOMI' ? ' selected' : ''}>TOMI</option></select>
+    </div>
+    ${list.length === 0 ? '<div class="empty"><i class="ti ti-inbox" style="font-size:24px;display:block;margin-bottom:6px"></i>Sin resultados</div>' : ''}
+    <div class="card-list">${slice.map(w => cardHtml(w)).join('')}</div>
+    ${list.length > PER_PAGE ? pagerHtml : `<div style="text-align:center;font-size:11px;color:var(--text3);padding:6px 0">${list.length} trabajo${list.length !== 1 ? 's' : ''}</div>`}`;
+}
+
+// ===== COBROS =====
+function setPageCob(p) { pageCob = p; }
+function renderCob() {
+  const cobrar = DATA.filter(x => x.cob === 'Cobrar');
+  const total = cobrar.reduce((a, x) => a + (x.pre || 0), 0);
+  const { slice, pagerHtml } = pager(cobrar, pageCob, 'setPageCob', 'renderCob');
+  document.getElementById('scr-cob').innerHTML = `
+    <div class="total-bar"><span style="font-size:13px;color:var(--text2)">Total pendiente</span><span style="font-size:16px;font-weight:500;color:#633806">${fmt(total)}</span></div>
+    <div class="filters"><select onchange="pageCob=1;filterCob(this.value)"><option value="">IVAN y TOMI</option><option>IVAN</option><option>TOMI</option></select></div>
+    ${cobrar.length === 0 ? '<div class="empty"><i class="ti ti-circle-check" style="font-size:24px;display:block;margin-bottom:6px;color:#085041"></i>Todo cobrado</div>' : ''}
+    <div class="card-list" id="cob-cards">${slice.map(w => cardHtml(w)).join('')}</div>
+    ${cobrar.length > PER_PAGE ? pagerHtml : ''}`;
+}
+function filterCob(val) {
+  const list = val ? DATA.filter(x => x.cob === 'Cobrar' && x.con2 === val) : DATA.filter(x => x.cob === 'Cobrar');
+  const { slice } = pager(list, 1, 'setPageCob', 'renderCob');
+  const el = document.getElementById('cob-cards');
+  if (el) el.innerHTML = slice.map(w => cardHtml(w)).join('');
+}
+
+// ===== CONFIG =====
+function renderCfg() {
+  const pi = CFG.pctIvan || 60;
+  document.getElementById('cfg-pct-ivan').value = pi;
+  document.getElementById('cfg-pct-tomi').value = 100 - pi;
+  document.getElementById('cfg-pct-ivan').oninput = function () {
+    document.getElementById('cfg-pct-tomi').value = 100 - Math.min(100, Math.max(0, parseInt(this.value) || 0));
+  };
+  document.getElementById('cfg-hon-list').innerHTML = TAREAS.map(t => `
+    <div class="cfg-row"><span class="cfg-name">${t}</span><input class="cfg-input" type="number" id="hon-${t.replace(/ /g, '_')}" value="${(CFG.honorarios || {})[t] || 0}"></div>`).join('');
+  document.getElementById('cfg-gas-list').innerHTML = TAREAS.map(t => `
+    <div class="cfg-row"><span class="cfg-name">${t}</span><input class="cfg-input" type="number" id="gas-${t.replace(/ /g, '_')}" value="${(CFG.gastos || {})[t] || 0}"></div>`).join('');
+}
+
+async function saveCfg() {
+  const btn = document.getElementById('btn-cfg-save');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  CFG.pctIvan = Math.min(100, Math.max(0, parseInt(document.getElementById('cfg-pct-ivan').value) || 60));
+  TAREAS.forEach(t => {
+    const h = document.getElementById('hon-' + t.replace(/ /g, '_'));
+    const g = document.getElementById('gas-' + t.replace(/ /g, '_'));
+    if (h) CFG.honorarios[t] = parseFloat(h.value) || 0;
+    if (g) CFG.gastos[t] = parseFloat(g.value) || 0;
+  });
+  // Flatten config for storage
+  const flat = { pctIvan: CFG.pctIvan };
+  TAREAS.forEach(t => {
+    flat['hon_' + t] = CFG.honorarios[t] || 0;
+    flat['gas_' + t] = CFG.gastos[t] || 0;
+  });
+  await api('PUT', 'config', flat);
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-check" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Guardar cambios';
+  toast('Configuración guardada');
+  render();
+}
+
+// ===== QUICK PAY =====
+async function quickPay(id, fpag) {
+  const w = DATA.find(x => x.id === id);
+  if (!w) return;
+  w.cob = 'Pagado'; w.cobr = w.con2; w.fpag = fpag;
+  await api('PUT', 'trabajo', w);
+  toast(`✓ Pagado — ${w.cobr} · ${fpag}`);
+  render();
+}
+
+// ===== DELETE =====
+async function delWork(id) {
+  if (!confirm('¿Eliminar este trabajo?')) return;
+  await api('DELETE', `trabajo&id=${id}`, null);
+  DATA = DATA.filter(x => x.id !== id);
+  toast('Trabajo eliminado');
+  render();
+}
+
+// ===== DETAIL MODAL =====
+function openDetail(id) {
+  const w = DATA.find(x => x.id === id); if (!w) return;
+  document.getElementById('modal-title').textContent = w.cli;
+  document.getElementById('detail-grid').innerHTML = `
+    <div class="detail-item"><div class="detail-label">Nomenclatura</div><div class="detail-val">${w.nom || '-'}</div></div>
+    <div class="detail-item"><div class="detail-label">Contacto</div><div class="detail-val">${w.con || '-'}</div></div>
+    <div class="detail-item"><div class="detail-label">Tarea</div><div class="detail-val">${w.tar}</div></div>
+    <div class="detail-item"><div class="detail-label">Contrata</div><div class="detail-val">${w.con2}</div></div>
+    <div class="detail-item"><div class="detail-label">Honorario</div><div class="detail-val">${fmt(w.pre)}</div></div>
+    <div class="detail-item"><div class="detail-label">Gastos (→ ${w.con2})</div><div class="detail-val">${fmt(w.gas)}</div></div>
+    <div class="detail-item"><div class="detail-label">Ganancia neta</div><div class="detail-val">${fmt((w.pre || 0) - (w.gas || 0))}</div></div>
+    <div class="detail-item"><div class="detail-label">Estado</div><div class="detail-val">${w.est}</div></div>
+    <div class="detail-item"><div class="detail-label">Cobro</div><div class="detail-val">${w.cob}${w.cobr ? ' — ' + w.cobr : ''}</div></div>
+    <div class="detail-item"><div class="detail-label">Forma de pago</div><div class="detail-val">${w.fpag || '-'}</div></div>
+    <div class="detail-item"><div class="detail-label">Mes</div><div class="detail-val">${w.mes || 'Enero'}</div></div>
+    ${w.obs ? `<div class="detail-item full"><div class="detail-label">Observación</div><div class="detail-val" style="font-weight:400">${w.obs}</div></div>` : ''}`;
+  document.getElementById('edit-form').innerHTML = '';
+  document.getElementById('modal-inner').classList.remove('edit-mode');
+  document.getElementById('modal-btns').innerHTML = `
+    <button class="btn-edit" onclick="startEdit(${id})"><i class="ti ti-edit" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i>Editar</button>
+    ${w.cob === 'Cobrar' ? `
+      <button class="btn-ef" onclick="quickPay(${id},'Efectivo');closeModalDirect()" style="flex:1;padding:7px;font-size:13px;border-radius:var(--radius)"><i class="ti ti-cash" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i>Efectivo</button>
+      <button class="btn-pay" onclick="quickPay(${id},'Transferencia');closeModalDirect()"><i class="ti ti-check" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i>Transferencia</button>` : ''}`;
+  document.getElementById('modal-bg').classList.add('show');
+}
+
+function startEdit(id) {
+  const w = DATA.find(x => x.id === id); if (!w) return;
+  document.getElementById('modal-inner').classList.add('edit-mode');
+  const opts = (arr, val) => arr.map(o => `<option${o === val ? ' selected' : ''}>${o}</option>`).join('');
+  const optsV = (arr, val) => arr.map(o => `<option value="${o.v}"${o.v === val ? ' selected' : ''}>${o.l}</option>`).join('');
+  document.getElementById('edit-form').innerHTML = `
+    <div class="fml" style="margin-bottom:10px">
+      <div class="fg full"><label>Cliente</label><input id="e-cli" value="${w.cli}"></div>
+      <div class="fg full"><label>Nomenclatura</label><input id="e-nom" value="${w.nom || ''}"></div>
+      <div class="fg full"><label>Contacto</label><input id="e-con" value="${w.con || ''}"></div>
+      <div class="fg"><label>Tarea</label><select id="e-tar" onchange="autoGastoEdit()">${opts(TAREAS, w.tar)}</select></div>
+      <div class="fg"><label>Contrata</label><select id="e-con2" onchange="autoGastoEdit()">${opts(['IVAN', 'TOMI'], w.con2)}</select></div>
+      <div class="fg"><label>Honorario ($)</label><input type="number" id="e-pre" value="${w.pre || ''}"></div>
+      <div class="fg"><label>Gastos ($)</label><input type="number" id="e-gas" value="${w.gas || ''}"><span class="gas-hint" id="e-gas-hint"><span class="gas-tag gas-${w.con2.toLowerCase()}">${fmt(getGasto(w.tar))} → ${w.con2}</span></span></div>
+      <div class="fg"><label>Estado</label><select id="e-est">${opts(['Contratado','Iniciado/en tramite','Medido','Dibujado','Terminado'], w.est)}</select></div>
+      <div class="fg"><label>Forma de pago</label><select id="e-fpag">${optsV([{v:'',l:'— Sin especificar —'},{v:'Efectivo',l:'Efectivo'},{v:'Transferencia',l:'Transferencia'}], w.fpag || '')}</select></div>
+      <div class="fg"><label>Cobro</label><select id="e-cob">${opts(['Cobrar','Pagado'], w.cob)}</select></div>
+      <div class="fg"><label>Cobrador</label><select id="e-cobr">${opts(['','IVAN','TOMI'], w.cobr || '')}</select></div>
+      <div class="fg"><label>Mes</label><select id="e-mes">${opts(MESES, w.mes || 'Enero')}</select></div>
+      <div class="fg full"><label>Observación</label><textarea id="e-obs">${w.obs || ''}</textarea></div>
+    </div>`;
+  document.getElementById('modal-btns').innerHTML = `
+    <button class="btn-edit" onclick="document.getElementById('modal-inner').classList.remove('edit-mode');openDetail(${id})">Cancelar</button>
+    <button class="btn-pay" id="btn-edit-save" onclick="applyEdit(${id})"><i class="ti ti-device-floppy" style="font-size:12px;vertical-align:-1px;margin-right:3px"></i>Guardar</button>`;
+}
+
+function autoGastoEdit() {
+  const tar = document.getElementById('e-tar').value;
+  const con2 = document.getElementById('e-con2').value;
+  document.getElementById('e-pre').value = getHonorario(tar) || '';
+  document.getElementById('e-gas').value = getGasto(tar) || '';
+  document.getElementById('e-gas-hint').innerHTML = `<span class="gas-tag gas-${con2.toLowerCase()}">${fmt(getGasto(tar))} → ${con2}</span>`;
+}
+
+async function applyEdit(id) {
+  const btn = document.getElementById('btn-edit-save');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const w = DATA.find(x => x.id === id); if (!w) return;
+  w.cli = document.getElementById('e-cli').value.trim() || w.cli;
+  w.nom = document.getElementById('e-nom').value.trim();
+  w.con = document.getElementById('e-con').value.trim();
+  w.tar = document.getElementById('e-tar').value;
+  w.con2 = document.getElementById('e-con2').value;
+  w.pre = parseFloat(document.getElementById('e-pre').value) || 0;
+  w.gas = parseFloat(document.getElementById('e-gas').value) || 0;
+  w.est = document.getElementById('e-est').value;
+  w.fpag = document.getElementById('e-fpag').value;
+  w.cob = document.getElementById('e-cob').value;
+  w.cobr = document.getElementById('e-cobr').value;
+  w.mes = document.getElementById('e-mes').value;
+  w.obs = document.getElementById('e-obs').value.trim();
+  await api('PUT', 'trabajo', w);
+  closeModalDirect(); render(); toast('Trabajo actualizado');
+}
+
+// ===== SAVE WORK =====
+async function saveWork() {
+  const cli = document.getElementById('f-cli').value.trim();
+  if (!cli) { toast('Ingresá el nombre del cliente'); return; }
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  const tar = document.getElementById('f-tar').value;
+  const con2 = document.getElementById('f-con2').value;
+  const w = {
+    cli, nom: document.getElementById('f-nom').value.trim(),
+    con: document.getElementById('f-con').value.trim(),
+    tar, con2,
+    pre: parseFloat(document.getElementById('f-pre').value) || getHonorario(tar),
+    gas: parseFloat(document.getElementById('f-gas').value) || getGasto(tar),
+    est: document.getElementById('f-est').value,
+    fpag: document.getElementById('f-fpag').value,
+    cob: document.getElementById('f-cob').value,
+    cobr: document.getElementById('f-cobr').value,
+    mes: document.getElementById('f-mes').value,
+    obs: document.getElementById('f-obs').value.trim()
+  };
+  const result = await api('POST', 'trabajo', w);
+  w.id = result.id;
+  DATA.push(w);
+  ['f-cli','f-nom','f-con','f-pre','f-gas','f-obs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-gas-hint').innerHTML = '';
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Guardar trabajo';
+  toast('Trabajo guardado'); render();
+}
+
+// ===== CSV IMPORT =====
+function detectSep(t) { const f = t.split('\n')[0] || ''; return ((f.match(/;/g) || []).length >= (f.match(/,/g) || []).length) ? ';' : ','; }
+function parseCSV(text, sep) {
+  return text.split('\n').map(l => {
+    l = l.replace(/\r/, '');
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (c === '"' && !inQ) inQ = true;
+      else if (c === '"' && inQ) inQ = false;
+      else if (c === sep && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cols.push(cur.trim()); return cols;
+  });
+}
+function isDataRow(r) {
+  if (!r || !r[0]) return false;
+  const v = r[0].replace(/"/g, '').trim().toUpperCase();
+  if (!v) return false;
+  for (const w of SKIP_WORDS) if (v.startsWith(w)) return false;
+  if (v.startsWith('➤') || v.startsWith('↑') || v.startsWith('INSTRUC')) return false;
+  return r.filter(c => c && c.replace(/"/g, '').trim()).length >= 2;
+}
+function clean(v) { return (v || '').replace(/^"|"$/g, '').trim(); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('import-zone').classList.remove('dragging'); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const text = e.target.result;
+    const sep = detectSep(text);
+    const dataRows = parseCSV(text, sep).filter(isDataRow);
+    if (!dataRows.length) { toast('No se encontraron datos válidos.'); return; }
+    pendingRows = dataRows; showPreview(dataRows, sep);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+function showPreview(rows, sep) {
+  const mes = document.getElementById('imp-mes').value;
+  document.getElementById('preview-title').textContent = `Vista previa — ${rows.length} trabajos (sep: "${sep}")`;
+  document.getElementById('import-stats').innerHTML = `
+    <div class="import-stat"><strong>${rows.length}</strong>trabajos</div>
+    <div class="import-stat"><strong>${rows.filter(r => clean(r[4]).toUpperCase() === 'IVAN').length}</strong>IVAN</div>
+    <div class="import-stat"><strong>${rows.filter(r => clean(r[4]).toUpperCase() === 'TOMI').length}</strong>TOMI</div>
+    <div class="import-stat"><strong>${mes}</strong>mes</div>`;
+  document.getElementById('preview-table').innerHTML =
+    `<tr><th>Cliente</th><th>Nomenclatura</th><th>Tarea</th><th>Contrata</th><th>Estado</th><th>Honorario</th><th>Gasto</th></tr>` +
+    rows.slice(0, 5).map(r => { const tar = clean(r[3]); return `<tr><td>${clean(r[0])}</td><td>${clean(r[2])}</td><td>${tar}</td><td>${clean(r[4])}</td><td>${clean(r[5])}</td><td>${fmt((CFG.honorarios || {})[tar] || 0)}</td><td>${fmt((CFG.gastos || {})[tar] || 0)}</td></tr>`; }).join('') +
+    (rows.length > 5 ? `<tr><td colspan="7" style="text-align:center;color:var(--text3)">... y ${rows.length - 5} más</td></tr>` : '');
+  document.getElementById('import-preview').style.display = 'block';
+  document.getElementById('btn-import').disabled = false;
+}
+async function doImport() {
+  if (!pendingRows.length) return;
+  const btn = document.getElementById('btn-import');
+  btn.disabled = true; btn.textContent = 'Importando...';
+  const mes = document.getElementById('imp-mes').value;
+  let works = [], skipped = 0;
+  pendingRows.forEach(r => {
+    const cli = clean(r[0]); if (!cli) { skipped++; return; }
+    const con2 = clean(r[4]).toUpperCase(); if (!['IVAN', 'TOMI'].includes(con2)) { skipped++; return; }
+    const tar = clean(r[3]);
+    works.push({ cli, nom: clean(r[2]), con: clean(r[1]), tar, con2, pre: (CFG.honorarios || {})[tar] || 0, gas: (CFG.gastos || {})[tar] || 0, est: clean(r[5]) || 'Contratado', fpag: '', cob: 'Cobrar', cobr: '', mes, obs: clean(r[6]) || '' });
+  });
+  const result = await api('POST', 'importar', works);
+  await loadData();
+  pendingRows = [];
+  document.getElementById('import-preview').style.display = 'none';
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-database-import" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Importar trabajos';
+  document.getElementById('csv-input').value = '';
+  render(); toast(`✓ ${result.count} importados${skipped ? ` · ${skipped} omitidos` : ''}`);
+}
+
+// ===== EXPORT CSV =====
+function exportCSV(mes) {
+  const d = DATA.filter(x => (x.mes || 'Enero') === mes);
+  const cols = ['Cliente','Nomenclatura','Contacto','Tarea','Contrata','Honorario','Gastos','Ganancia','Estado','FormaPago','Cobro','Cobrador','Mes','Observacion'];
+  const rows = d.map(w => [w.cli,w.nom,w.con,w.tar,w.con2,w.pre,w.gas,(w.pre||0)-(w.gas||0),w.est,w.fpag,w.cob,w.cobr,w.mes,w.obs||''].map(v => `"${v || ''}"`).join(','));
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent([cols.join(','), ...rows].join('\n'));
+  a.download = `IMD_Agrimensura_${mes}_2026.csv`; a.click();
+  toast('CSV descargado');
+}
+
+function closeModal(e) { if (e.target === document.getElementById('modal-bg')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-bg').classList.remove('show'); }
+
+// ===== INIT =====
+(async () => {
+  await loadData();
+  render();
+  setTimeout(() => autoGasto(), 100);
+})();
+</script>
+</body>
+</html>
