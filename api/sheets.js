@@ -4,7 +4,7 @@ const SPREADSHEET_ID = '1CNISUnxT8-rAQxiq_Fj1gz4yGwVAg4MqusS-0R9ioMo';
 const SHEET_NAME = 'Trabajos';
 const CFG_SHEET = 'Config';
 
-const HEADERS = ['ID','CLIENTE','NOMENCLATURA','CONTACTO','TAREA','CONTRATA','HONORARIO','GASTOS','ESTADO','FORMA_PAGO','COBRO','COBRADOR','MES','OBSERVACION'];
+const HEADERS = ['ID','CLIENTE','NOMENCLATURA','CONTACTO','TAREA','CONTRATA','HONORARIO','GASTOS','ESTADO','FORMA_PAGO','COBRO','COBRADOR','MES','ANIO','OBSERVACION'];
 const CFG_HEADERS = ['CLAVE','VALOR'];
 
 function getAuth() {
@@ -24,7 +24,7 @@ async function ensureHeaders(sheets) {
   // Ensure Trabajos sheet has headers
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!A1:N1`,
+    range: `${SHEET_NAME}!A1:O1`,
   }).catch(() => null);
 
   if (!res || !res.data.values || !res.data.values[0] || res.data.values[0][0] !== 'ID') {
@@ -34,6 +34,17 @@ async function ensureHeaders(sheets) {
       valueInputOption: 'RAW',
       requestBody: { values: [HEADERS] },
     });
+  } else {
+    // If headers exist but ANIO column is missing, add it
+    const existingHeaders = res.data.values[0];
+    if (!existingHeaders.includes('ANIO')) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME}!A1`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [HEADERS] },
+      });
+    }
   }
 
   // Ensure Config sheet exists and has headers
@@ -43,7 +54,6 @@ async function ensureHeaders(sheets) {
   }).catch(() => null);
 
   if (!cfgRes || !cfgRes.data.values || !cfgRes.data.values[0]) {
-    // Try to add Config sheet
     try {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
@@ -64,25 +74,30 @@ async function ensureHeaders(sheets) {
 
 function rowToWork(row) {
   return {
-    id: parseInt(row[0]) || 0,
-    cli: row[1] || '',
-    nom: row[2] || '',
-    con: row[3] || '',
-    tar: row[4] || '',
-    con2: row[5] || '',
-    pre: parseFloat(row[6]) || 0,
-    gas: parseFloat(row[7]) || 0,
-    est: row[8] || '',
-    fpag: row[9] || '',
-    cob: row[10] || 'Cobrar',
+    id:   parseInt(row[0])   || 0,
+    cli:  row[1]  || '',
+    nom:  row[2]  || '',
+    con:  row[3]  || '',
+    tar:  row[4]  || '',
+    con2: row[5]  || '',
+    pre:  parseFloat(row[6]) || 0,
+    gas:  parseFloat(row[7]) || 0,
+    est:  row[8]  || '',
+    fpag: row[9]  || '',
+    cob:  row[10] || 'Cobrar',
     cobr: row[11] || '',
-    mes: row[12] || 'Enero',
-    obs: row[13] || '',
+    mes:  row[12] || 'Enero',
+    anio: row[13] || '2026',
+    obs:  row[14] || '',
   };
 }
 
 function workToRow(w) {
-  return [w.id, w.cli, w.nom, w.con, w.tar, w.con2, w.pre, w.gas, w.est, w.fpag, w.cob, w.cobr, w.mes, w.obs];
+  return [
+    w.id, w.cli, w.nom, w.con, w.tar, w.con2,
+    w.pre, w.gas, w.est, w.fpag, w.cob, w.cobr,
+    w.mes, w.anio || '2026', w.obs
+  ];
 }
 
 module.exports = async (req, res) => {
@@ -102,7 +117,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET' && action === 'trabajos') {
       const r = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A2:N`,
+        range: `${SHEET_NAME}!A2:O`,
       });
       const rows = r.data.values || [];
       const works = rows.filter(row => row[0] && row[1]).map(rowToWork);
@@ -121,17 +136,15 @@ module.exports = async (req, res) => {
       return res.json(cfg);
     }
 
-    // POST - add work
+    // POST - add single work
     if (req.method === 'POST' && action === 'trabajo') {
       const w = req.body;
-      // Get next ID
       const r = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: `${SHEET_NAME}!A2:A`,
       });
       const ids = (r.data.values || []).map(row => parseInt(row[0]) || 0);
       w.id = ids.length ? Math.max(...ids) + 1 : 1;
-
       await sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
         range: `${SHEET_NAME}!A2`,
@@ -141,7 +154,7 @@ module.exports = async (req, res) => {
       return res.json({ ok: true, id: w.id });
     }
 
-    // POST - bulk import
+    // POST - bulk import (only appends, never touches existing rows)
     if (req.method === 'POST' && action === 'importar') {
       const works = req.body;
       const r = await sheets.spreadsheets.values.get({
@@ -160,7 +173,7 @@ module.exports = async (req, res) => {
       return res.json({ ok: true, count: rows.length });
     }
 
-    // PUT - update work
+    // PUT - update single work (only updates the matching row)
     if (req.method === 'PUT' && action === 'trabajo') {
       const w = req.body;
       const r = await sheets.spreadsheets.values.get({
@@ -170,17 +183,17 @@ module.exports = async (req, res) => {
       const rows = r.data.values || [];
       const rowIndex = rows.findIndex(row => parseInt(row[0]) === w.id);
       if (rowIndex === -1) return res.status(404).json({ error: 'Not found' });
-      const sheetRow = rowIndex + 2;
+      const sheetRow = rowIndex + 2; // +1 for header row, +1 for 1-based index
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A${sheetRow}:N${sheetRow}`,
+        range: `${SHEET_NAME}!A${sheetRow}:O${sheetRow}`,
         valueInputOption: 'RAW',
         requestBody: { values: [workToRow(w)] },
       });
       return res.json({ ok: true });
     }
 
-    // DELETE - delete work
+    // DELETE - delete single work by ID
     if (req.method === 'DELETE' && action === 'trabajo') {
       const id = parseInt(req.query.id);
       const r = await sheets.spreadsheets.values.get({
@@ -191,18 +204,23 @@ module.exports = async (req, res) => {
       const rowIndex = rows.findIndex(row => parseInt(row[0]) === id);
       if (rowIndex === -1) return res.status(404).json({ error: 'Not found' });
 
-      // Get sheet ID
       const meta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
       const sheet = meta.data.sheets.find(s => s.properties.title === SHEET_NAME);
       const sheetId = sheet.properties.sheetId;
-      const sheetRow = rowIndex + 1; // 0-indexed, row 1 = headers
+      // rowIndex is 0-based within data rows; +1 to skip header row (row index 0 in sheet = header)
+      const sheetRowIndex = rowIndex + 1;
 
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
         requestBody: {
           requests: [{
             deleteDimension: {
-              range: { sheetId, dimension: 'ROWS', startIndex: sheetRow, endIndex: sheetRow + 1 }
+              range: {
+                sheetId,
+                dimension: 'ROWS',
+                startIndex: sheetRowIndex,
+                endIndex: sheetRowIndex + 1
+              }
             }
           }]
         }
@@ -214,7 +232,6 @@ module.exports = async (req, res) => {
     if (req.method === 'PUT' && action === 'config') {
       const cfg = req.body;
       const rows = Object.entries(cfg).map(([k, v]) => [k, String(v)]);
-      // Clear and rewrite
       await sheets.spreadsheets.values.clear({
         spreadsheetId: SPREADSHEET_ID,
         range: `${CFG_SHEET}!A2:B`,
