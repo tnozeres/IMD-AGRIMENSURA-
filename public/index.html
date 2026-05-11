@@ -409,8 +409,9 @@ function renderRes(){
   const pct=getPct();
   const ing=pag.reduce((a,x)=>a+(x.pre||0),0),gas=md.reduce((a,x)=>a+(x.gas||0),0),gan=ing-gas;
   const pend=cobrar.reduce((a,x)=>a+(x.pre||0),0);
-  const iC=pag.filter(x=>x.cobr==='IVAN').reduce((a,x)=>a+(x.pre||0),0);
-  const tC=pag.filter(x=>x.cobr==='TOMI').reduce((a,x)=>a+(x.pre||0),0);
+  // FIX: si cobr está vacío, usar con2 como fallback para asignar el cobro al profesional correcto
+  const iC=pag.filter(x=>(x.cobr||x.con2)==='IVAN').reduce((a,x)=>a+(x.pre||0),0);
+  const tC=pag.filter(x=>(x.cobr||x.con2)==='TOMI').reduce((a,x)=>a+(x.pre||0),0);
   const iG=md.filter(x=>x.con2==='IVAN').reduce((a,x)=>a+(x.gas||0),0);
   const tG=md.filter(x=>x.con2==='TOMI').reduce((a,x)=>a+(x.gas||0),0);
   const iCorr=Math.round(gan*pct.ivan),tCorr=Math.round(gan*pct.tomi);
